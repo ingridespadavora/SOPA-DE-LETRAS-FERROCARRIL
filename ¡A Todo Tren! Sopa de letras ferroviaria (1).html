@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>¡A Todo Tren! · Sopa de letras ferroviaria</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=Barlow:wght@500;700&display=swap">
+<style>
+:root{--bg:#e6eee9;--panel:#fff;--ink:#12302d;--muted:#4f6664;--sign:#0f4a44;--sign2:#0a3834;--gold:#f1b51c;--line:#cbd9d3;--tile:#fbfdfb;--soft:#eef4f0;--red:#c4452f;
+ box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b1817;--panel:#12262a;--ink:#e6f0ec;--muted:#9bb2ae;--sign:#0a3531;--sign2:#072a27;--line:#2a4642;--tile:#173037;--soft:#183036}}
+:root[data-theme="dark"]{--bg:#0b1817;--panel:#12262a;--ink:#e6f0ec;--muted:#9bb2ae;--sign:#0a3531;--sign2:#072a27;--line:#2a4642;--tile:#173037;--soft:#183036}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font:500 1rem/1.45 Barlow,system-ui,-apple-system,"Segoe UI",Arial,sans-serif}
+h1,h2,.disp{font-family:"Barlow Condensed","Arial Narrow",Arial,sans-serif;font-weight:800;line-height:1}
+button{font:inherit;cursor:pointer;color:inherit}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.screen{display:none;min-height:100vh;padding:16px;align-items:center;justify-content:center}
+.screen.on{display:flex}
+.wrap{width:min(940px,100%)}
+.plate{background:var(--sign);color:#fff;border:4px solid #fff;outline:3px solid var(--sign);border-radius:14px;padding:clamp(18px,4vw,34px);text-align:center;box-shadow:0 10px 30px #0003}
+.plate h1{font-size:clamp(3rem,13vw,6.2rem);color:var(--gold);margin:6px 0 10px;letter-spacing:.01em}
+.plate p{margin:0 auto;max-width:520px;color:#d8ebe5}
+.rails{height:14px;margin:18px 0;background:linear-gradient(var(--line),var(--line)) 0 2px/100% 3px no-repeat,linear-gradient(var(--line),var(--line)) 0 9px/100% 3px no-repeat,repeating-linear-gradient(90deg,transparent 0 14px,var(--muted) 14px 18px);opacity:.7}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px}
+.lvls{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 16px}
+.lvl{background:var(--soft);border:2px solid var(--line);border-radius:10px;padding:12px 8px;text-align:center}
+.lvl[aria-pressed="true"]{border-color:var(--gold);background:var(--sign);color:#fff}
+.lvl b{display:block;font:800 1.5rem "Barlow Condensed",Arial,sans-serif}
+.lvl small{display:block;color:var(--muted);font-size:.82rem}
+.lvl[aria-pressed="true"] small{color:#cfe6df}
+.how{margin:0 0 18px;padding-left:1.2em;color:var(--muted)}
+.btn{border:0;border-radius:10px;background:var(--gold);color:#2b2108;font-weight:700;padding:14px 26px;box-shadow:0 4px 0 #b98a0f;font-size:1.05rem;width:100%}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #b98a0f}
+.ghost{border:2px solid var(--line);background:var(--panel);border-radius:10px;padding:9px 16px;font-weight:700}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.top h2{font-size:1.9rem;margin:0;color:var(--ink)}
+.stats{display:flex;gap:8px}
+.stat{background:var(--sign);color:#fff;border-radius:8px;padding:5px 12px;text-align:center;min-width:76px}
+.stat small{display:block;font-size:.7rem;color:#bcd9d1;line-height:1.1}
+.stat b{font:800 1.4rem "Barlow Condensed",Arial,sans-serif;font-variant-numeric:tabular-nums}
+.stat.warn b{color:#ff9d8a}
+.track{position:relative;height:30px;margin:6px 0 12px}
+.track .rails{position:absolute;inset:auto 0 0;margin:0}
+.train{position:absolute;bottom:6px;font-size:1.5rem;line-height:1;transform:scaleX(-1);transition:left .4s}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:16px;align-items:start}
+#grid{display:grid;grid-template-columns:repeat(var(--n),1fr);gap:3px;width:100%;max-width:640px;margin:auto;touch-action:none;user-select:none;-webkit-user-select:none;padding:8px;background:var(--sign2);border-radius:12px}
+.cell{aspect-ratio:1;display:flex;align-items:center;justify-content:center;background:var(--tile);color:var(--ink);border-radius:5px;font:800 clamp(.7rem,calc(min(100vw,640px)/var(--n)*.46),1.25rem) "Barlow Condensed",Arial,sans-serif;cursor:pointer}
+.cell.sel{background:var(--gold);color:#2b2108}
+.cell.found{background:hsl(var(--h) 62% 72%);color:#10302d}
+.cell.hint{animation:blink .5s 4;background:var(--gold);color:#2b2108}
+.cell.kb{box-shadow:inset 0 0 0 3px var(--gold)}
+@keyframes blink{50%{transform:scale(1.18)}}
+.side{display:flex;flex-direction:column;gap:12px}
+.words{list-style:none;margin:0;padding:0;display:grid;gap:5px;font:800 1.2rem "Barlow Condensed",Arial,sans-serif;letter-spacing:.03em}
+.words li{display:flex;justify-content:space-between}
+.words li.done{color:var(--muted);text-decoration:line-through}
+.words li.done::after{content:"✓";color:#2e8a62;text-decoration:none}
+#fact{display:flex;gap:12px;min-height:76px;margin-top:12px;align-items:center}
+#fact .em{font-size:2rem}
+#fact b{font-family:"Barlow Condensed",Arial,sans-serif;font-size:1.2rem;letter-spacing:.03em}
+#fact p{margin:0;color:var(--muted);font-size:.95rem}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.end .big{font:800 5rem "Barlow Condensed",Arial,sans-serif;color:var(--gold);line-height:1}
+.end .row{display:grid;gap:10px;margin-top:18px}
+@media(max-width:760px){.layout{grid-template-columns:1fr}.side{display:grid;grid-template-columns:1fr 1fr}.words{grid-template-columns:1fr 1fr}.side .card:first-child{grid-column:1/-1}}
+@media(max-width:430px){.stat{min-width:64px;padding:4px 8px}.lvls{gap:6px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<section id="s-start" class="screen on"><div class="wrap">
+ <div class="plate"><div style="font-size:3rem">🚂</div><h1>¡A TODO TREN!</h1><p>Sopa de letras para encontrar las palabras clave de los ferrocarriles y aprender un dato en cada hallazgo.</p></div>
+ <div class="rails"></div>
+ <div class="card">
+  <h2 style="margin:0 0 10px;font-size:1.6rem">Elegí tu recorrido</h2>
+  <div class="lvls" id="lvls">
+   <button class="lvl" data-l="facil" aria-pressed="false"><b>Fácil</b><small>Palabras → y ↓<br>3 min</small><small id="b-facil"></small></button>
+   <button class="lvl" data-l="normal" aria-pressed="true"><b>Normal</b><small>Con diagonales<br>2:30 min</small><small id="b-normal"></small></button>
+   <button class="lvl" data-l="dificil" aria-pressed="false"><b>Difícil</b><small>En todas direcciones<br>2 min</small><small id="b-dificil"></small></button>
+  </div>
+  <ol class="how"><li>Arrastrá el dedo o el mouse desde la primera hasta la última letra. También podés tocar la primera y luego la última.</li><li>Cada palabra suma 10 puntos y te deja un dato ferroviario.</li><li>Si te trabás, la pista revela una letra inicial (cuesta 5 puntos).</li></ol>
+  <button class="btn" id="go">Iniciar juego</button>
+ </div>
+</div></section>
+
+<section id="s-game" class="screen"><div class="wrap">
+ <div class="top"><h2 class="disp">🚂 ¡A todo tren!</h2>
+  <div class="stats"><div class="stat"><small>Puntos</small><b id="score">0</b></div><div class="stat" id="tbox"><small>Tiempo</small><b id="time">0:00</b></div><div class="stat"><small>Palabras</small><b id="count">0/10</b></div></div></div>
+ <div class="track" aria-hidden="true"><div class="rails"></div><div class="train" id="train">🚂</div></div>
+ <div class="layout">
+  <div>
+   <div id="grid" tabindex="0" role="application" aria-label="Sopa de letras. Con el teclado: flechas para moverte y Enter para marcar la primera y la última letra"></div>
+   <div class="card" id="fact" aria-live="polite"><div class="em">🔎</div><div><b>Buscá una palabra</b><p>Cada hallazgo te cuenta algo del mundo ferroviario.</p></div></div>
+   <div class="acts"><button class="ghost" id="hint">💡 Pista (−5)</button><button class="ghost" id="quit">Terminar partida</button></div>
+  </div>
+  <aside class="side"><div class="card"><h2 style="font-size:1.4rem;margin:0 0 8px">Por encontrar</h2><ul class="words" id="words"></ul></div>
+  <div class="card"><p style="margin:0;color:var(--muted);font-size:.92rem">Las palabras no llevan tildes y pueden leerse al derecho o al revés.</p></div></aside>
+ </div>
+</div></section>
+
+<section id="s-end" class="screen"><div class="wrap end">
+ <div class="plate"><div style="font-size:3rem" id="e-em">🏁</div><h1 id="e-t">¡FIN DEL RECORRIDO!</h1><p id="e-m"></p><div class="big" id="e-s">0</div><p id="e-b"></p></div>
+ <div class="row"><button class="btn" id="again">Jugar otra vez</button><button class="ghost" id="menu">Cambiar de nivel</button></div>
+</div></section>
+
+<script>
+const WORDS=[
+ {w:"FERROCARRIL",f:"El ferrocarril es un sistema de transporte terrestre que circula sobre vías y traslada personas y mercancías.",e:"🚆"},
+ {w:"LOCOMOTORA",f:"La locomotora es el vehículo que aporta la fuerza necesaria para mover un tren.",e:"🚂"},
+ {w:"VAGON",f:"Los vagones se enganchan a la locomotora y llevan pasajeros o distintos tipos de carga.",e:"🚃"},
+ {w:"ESTACION",f:"En las estaciones los trenes hacen paradas para que suban y bajen pasajeros o se organicen las cargas.",e:"🚉"},
+ {w:"VIAS",f:"Las vías guían el recorrido del tren y están formadas por rieles apoyados sobre durmientes.",e:"🛤️"},
+ {w:"RIELES",f:"Los rieles son barras metálicas paralelas sobre las que ruedan las ruedas del tren.",e:"🔩"},
+ {w:"TREN",f:"Un tren es un conjunto de vehículos ferroviarios unidos que circulan por una misma vía.",e:"🚄"},
+ {w:"PASAJEROS",f:"El tren permite trasladar a muchas personas en un mismo viaje.",e:"🧳"},
+ {w:"CARGA",f:"Los trenes de carga llevan productos y materias primas, y conectan zonas productivas con ciudades y puertos.",e:"📦"},
+ {w:"MAQUINISTA",f:"El maquinista es la persona capacitada para conducir y controlar la marcha del tren.",e:"👷"}
+];
+const D8=[[0,1],[1,0],[1,1],[-1,1],[0,-1],[-1,0],[-1,-1],[1,-1]];
+const LV={facil:{n:12,t:180,d:D8.slice(0,2)},normal:{n:13,t:150,d:D8.slice(0,4)},dificil:{n:14,t:120,d:D8}};
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+let lv="normal",N,board,found,score,left,timer,start,cur,armed,drag,hints,kb;
+const best=l=>{try{return +localStorage.getItem("sopa-"+l)||0}catch(e){return 0}};
+const saveBest=(l,v)=>{try{localStorage.setItem("sopa-"+l,v)}catch(e){}};
+function show(id){$$(".screen").forEach(s=>s.classList.toggle("on",s.id===id))}
+function showBest(){["facil","normal","dificil"].forEach(l=>{const b=best(l);$("#b-"+l).textContent=b?"Récord: "+b:""})}
+function make(){
+ const {n,d}=LV[lv];N=n;
+ for(let t=0;t<80;t++){
+  const b=Array.from({length:n},()=>Array(n).fill("")),list=[...WORDS].sort((a,c)=>c.w.length-a.w.length);let ok=true;
+  for(const x of list){
+   let placed=false;
+   for(let a=0;a<300&&!placed;a++){
+    const [dr,dc]=d[Math.random()*d.length|0],L=x.w.length,r=Math.random()*n|0,c=Math.random()*n|0,er=r+dr*(L-1),ec=c+dc*(L-1);
+    if(er<0||er>=n||ec<0||ec>=n)continue;
+    let fit=true;for(let i=0;i<L;i++){const ch=b[r+dr*i][c+dc*i];if(ch&&ch!==x.w[i]){fit=false;break}}
+    if(!fit)continue;
+    for(let i=0;i<L;i++)b[r+dr*i][c+dc*i]=x.w[i];placed=true;
+   }
+   if(!placed){ok=false;break}
+  }
+  if(ok){const al="ABCDEFGHIJLMNOPQRSTUVXYZ";for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(!b[r][c])b[r][c]=al[Math.random()*al.length|0];board=b;return}
+ }
+}
+const cellEl=(r,c)=>$(`.cell[data-r="${r}"][data-c="${c}"]`);
+function render(){
+ const g=$("#grid");g.style.setProperty("--n",N);g.innerHTML="";
+ for(let r=0;r<N;r++)for(let c=0;c<N;c++){const e=document.createElement("div");e.className="cell";e.dataset.r=r;e.dataset.c=c;e.textContent=board[r][c];g.appendChild(e)}
+ $("#words").innerHTML=WORDS.map(x=>`<li data-w="${x.w}">${x.w}</li>`).join("");
+}
+function stats(){
+ $("#score").textContent=score;$("#count").textContent=found.size+"/"+WORDS.length;
+ $("#time").textContent=Math.floor(left/60)+":"+String(left%60).padStart(2,"0");
+ $("#tbox").classList.toggle("warn",left<=20);
+ $("#train").style.left=(found.size/WORDS.length*(100-6))+"%";
+}
+function line(a,b){
+ const dr=b[0]-a[0],dc=b[1]-a[1],s=Math.max(Math.abs(dr),Math.abs(dc));
+ if(!s)return [a];
+ if(dr&&dc&&Math.abs(dr)!==Math.abs(dc))return [];
+ const sr=Math.sign(dr),sc=Math.sign(dc);
+ return Array.from({length:s+1},(_,i)=>[a[0]+sr*i,a[1]+sc*i]);
+}
+function clearSel(){$$(".cell.sel").forEach(e=>e.classList.remove("sel"))}
+function paint(c){cur=c;clearSel();const l=line(start,c);(l.length?l:[start]).forEach(([r,k])=>cellEl(r,k).classList.add("sel"))}
+function fact(e,t,p){$("#fact").innerHTML=`<div class="em">${e}</div><div><b>${t}</b><p>${p}</p></div>`}
+function check(a,b){
+ clearSel();start=null;armed=false;
+ const cells=line(a,b);
+ if(cells.length<2){fact("↔️","Elegí dos letras distintas","Marcá la primera y la última letra de la palabra.");return}
+ const s=cells.map(([r,c])=>board[r][c]).join(""),rev=[...s].reverse().join("");
+ const m=WORDS.find(x=>x.w===s||x.w===rev);
+ if(!m){fact("🤔","No es una palabra de la lista","Tiene que estar en línea recta, sin saltear letras.");return}
+ if(found.has(m.w)){fact("✔️","Ya encontraste "+m.w,"Buscá otra de la lista.");return}
+ const h=found.size*37%360;found.set(m.w,h);score+=10;
+ cells.forEach(([r,c])=>{const e=cellEl(r,c);e.style.setProperty("--h",h);e.classList.add("found")});
+ $(`#words li[data-w="${m.w}"]`).classList.add("done");
+ fact(m.e,m.w+" · +10 puntos",m.f);stats();
+ if(found.size===WORDS.length)setTimeout(()=>finish(true),900);
+}
+function cellOf(e){const el=document.elementFromPoint(e.clientX,e.clientY),c=el&&el.closest(".cell");return c?[+c.dataset.r,+c.dataset.c]:null}
+const g=$("#grid");
+g.addEventListener("pointerdown",e=>{
+ const c=cellOf(e);if(!c)return;e.preventDefault();
+ if(armed){check(start,c);return}
+ start=c;cur=c;drag=true;paint(c);try{g.setPointerCapture(e.pointerId)}catch(x){}
+});
+g.addEventListener("pointermove",e=>{if(!drag)return;const c=cellOf(e);if(c&&(c[0]!==cur[0]||c[1]!==cur[1]))paint(c)});
+g.addEventListener("pointerup",e=>{
+ if(!drag)return;drag=false;const c=cellOf(e)||cur;
+ if(c[0]===start[0]&&c[1]===start[1]){armed=true;fact("👆","Primera letra marcada","Ahora tocá la última letra de la palabra.")}else check(start,c);
+});
+g.addEventListener("pointercancel",()=>{drag=false;start=null;clearSel()});
+g.addEventListener("keydown",e=>{
+ const k={ArrowRight:[0,1],ArrowLeft:[0,-1],ArrowDown:[1,0],ArrowUp:[-1,0]}[e.key];
+ if(k){e.preventDefault();kb=kb||[0,0];kb=[Math.min(N-1,Math.max(0,kb[0]+k[0])),Math.min(N-1,Math.max(0,kb[1]+k[1]))];$$(".cell.kb").forEach(x=>x.classList.remove("kb"));cellEl(...kb).classList.add("kb");if(start){start&&paint(kb)}}
+ else if((e.key==="Enter"||e.key===" ")&&kb){e.preventDefault();if(!start){start=kb;cur=kb;armed=true;paint(kb)}else check(start,kb)}
+});
+$("#hint").onclick=()=>{
+ const left2=WORDS.filter(x=>!found.has(x.w));if(!left2.length)return;
+ const x=left2[Math.random()*left2.length|0];
+ outer:for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(board[r][c]===x.w[0]||board[r][c]===x.w.at(-1)){
+  for(const [dr,dc] of D8){const L=x.w.length,er=r+dr*(L-1),ec=c+dc*(L-1);if(er<0||er>=N||ec<0||ec>=N)continue;
+   let s="";for(let i=0;i<L;i++)s+=board[r+dr*i][c+dc*i];
+   if(s===x.w){const e=cellEl(r,c);e.classList.add("hint");setTimeout(()=>e.classList.remove("hint"),2600);score=Math.max(0,score-5);hints++;stats();fact("💡","Pista para "+x.w,"Mirá la letra que parpadea: ahí empieza la palabra.");break outer}}}
+};
+function tick(){left--;stats();if(left<=0)finish(false)}
+function startGame(){
+ clearInterval(timer);score=0;hints=0;found=new Map();start=null;armed=false;drag=false;kb=null;left=LV[lv].t;
+ make();render();stats();fact("🔎","Buscá una palabra","Cada hallazgo te cuenta algo del mundo ferroviario.");
+ show("s-game");timer=setInterval(tick,1000);
+}
+function finish(win){
+ clearInterval(timer);
+ const bonus=win?left:0,total=score+bonus,prev=best(lv),rec=total>prev;
+ if(rec&&total>0)saveBest(lv,total);
+ $("#e-em").textContent=win?"🏆":"🚉";
+ $("#e-t").textContent=win?"¡LLEGASTE A DESTINO!":"¡SE ACABÓ EL TIEMPO!";
+ $("#e-m").textContent=`Encontraste ${found.size} de ${WORDS.length} palabras`+(win?` y ganaste ${bonus} puntos por el tiempo que sobró.`:".");
+ $("#e-s").textContent=total;
+ $("#e-b").textContent=rec&&total>0?"¡Nuevo récord en este nivel!":"Tu récord en este nivel: "+prev;
+ show("s-end");
+}
+$$("#lvls .lvl").forEach(b=>b.onclick=()=>{lv=b.dataset.l;$$("#lvls .lvl").forEach(x=>x.setAttribute("aria-pressed",x===b))});
+$("#go").onclick=startGame;$("#again").onclick=startGame;
+$("#quit").onclick=()=>finish(false);
+$("#menu").onclick=()=>{showBest();show("s-start")};
+showBest();
+</script>
+</body>
+</html>
